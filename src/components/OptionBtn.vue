@@ -1,16 +1,24 @@
 <template>
-  <div class="btn-container" :style="{ width, height }" @click="">
+  <button class="btn-container" :style="{ width, height }" @click="goToQuiz">
     <div>
-      <p>다시 시작</p>
+      <slot></slot>
     </div>
-  </div>
+  </button>
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router';
+
 defineProps({
   width: String,
   height: String,
 });
+
+const router = useRouter()
+
+const goToQuiz = () => {
+  router.push('/question')
+}
 </script>
 
 <style scoped lang="scss">
@@ -21,6 +29,7 @@ defineProps({
   align-items: center;
   border-radius: 15px;
   background: $gradient-primary;
-  // color: $color-text-primary;
+  color: $color-text-primary;
+  cursor: pointer;
 }
 </style>
