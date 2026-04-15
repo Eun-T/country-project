@@ -1,0 +1,13 @@
+@use './variables' as *;
+
+body {
+//   font-family: $font-main;
+//   background-color: $color-bg;
+  color: $color-text-primary;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: $spacing-md;
+}
