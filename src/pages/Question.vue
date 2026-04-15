@@ -6,6 +6,12 @@
 
 <script setup>
 import QuizCard from '@/components/QuizCard.vue';
+import { useQuizStore } from '@/stores/counter';
+
+const quizStore = useQuizStore()
+
+
+quizStore.axiosQuiz()
 </script>
 
 <style scoped lang="scss">
