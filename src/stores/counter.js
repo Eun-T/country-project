@@ -12,7 +12,7 @@ export const useQuizStore = defineStore('quiz', () => {
 
   const axiosQuiz = async () => {
     const response = await getCountry()
-    return response
+    return response.data
   }
 
 
