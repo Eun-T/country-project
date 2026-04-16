@@ -9,12 +9,12 @@
             :progress="progress"
           />
         </div>
-        <h3 class="question-explain">이 국기 ?? 는 어느 나라의 것일까요?</h3>
+        <h3 class="question-explain" >이 국기 {{ states.list[0]?.name.common }} 는 어느 나라의 것일까요?</h3>
         <div class="question-btn">
-          <PrimaryBtn width="250px" height="60px"> 스웨덴 </PrimaryBtn>
-          <PrimaryBtn width="250px" height="60px"> 스웨덴 </PrimaryBtn>
-          <PrimaryBtn width="250px" height="60px"> 스웨덴 </PrimaryBtn>
-          <PrimaryBtn width="250px" height="60px"> 스웨덴 </PrimaryBtn>
+          <PrimaryBtn width="250px" height="60px" @click="goToNext"> 스웨덴 </PrimaryBtn>
+          <PrimaryBtn width="250px" height="60px" @click="goToNext"> 스웨덴 </PrimaryBtn>
+          <PrimaryBtn width="250px" height="60px" @click="goToNext"> 스웨덴 </PrimaryBtn>
+          <PrimaryBtn width="250px" height="60px" @click="goToNext"> 스웨덴 </PrimaryBtn>
         </div>
       </div>
     </QuizCard>
@@ -26,7 +26,7 @@ import PrimaryBtn from '@/components/PrimaryBtn.vue';
 import QuizCard from '@/components/QuizCard.vue';
 import QuizProgress from '@/components/QuizProgress.vue';
 import { useQuizStore } from '@/stores/counter';
-import { onMounted, reactive } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 
 const store = useQuizStore();
 const states = reactive({
@@ -43,14 +43,21 @@ const states = reactive({
     { id: 9, isCorrect: false },
     { id: 10, isCorrect: false },
   ],
-  numList: [],
+  problemList: [],
 });
+const problemNUm = ref(0);
+
+const computeNum = computed(() => {
+  
+})
+
+const goToNext = () => {
+  problemNUm.value++
+}
 
 onMounted(async () => {
   const response = await store.axiosQuiz();
   const num = [];
-  states.list = response;
-  console.log(states.list);
 
   //랜덤한 수 10개 뽑기 (중복 제거)
   for (let index = 0; index < 10; index++) {
@@ -60,7 +67,13 @@ onMounted(async () => {
     }
     num.push(num1);
   }
+
+  for (let i = 0; i < num.length; i++) {
+    states.list.push(response[num[i]])
+  }
+  console.log(states.list);
 });
+
 </script>
 
 <style scoped lang="scss">
