@@ -1,7 +1,8 @@
 <template>
-  <div class="progress-container" :class="{correct: progress.isCorrect}">
+  <div class="progress-container" :class="{ correct: progress.isCorrect }">
     <div>
-      {{ progress.id }}
+      <!-- {{ progress.id }} -->
+      {{ problemNUm }}
     </div>
   </div>
 </template>
@@ -11,6 +12,7 @@ import { ref } from 'vue';
 
 defineProps({
   progress: Object,
+  problemNUm: Number,
 });
 
 const num = ref(0);
