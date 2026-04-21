@@ -7,7 +7,6 @@
             v-for="(progress, index) in states.progresses"
             :key="index"
             :progress="progress"
-            :problemNUm="problemNUm"
           />
         </div>
         <h3 class="question-explain">
@@ -21,20 +20,15 @@
           는 어느 나라의 것일까요?
         </h3>
         <div class="question-btn">
-          <PrimaryBtn width="250px" height="60px" @click="goToNext">
-            {{wrongChoices?.value}}
-          </PrimaryBtn>
-          <PrimaryBtn width="250px" height="60px" @click="goToNext">
-            스웨덴
-          </PrimaryBtn>
-          <PrimaryBtn width="250px" height="60px" @click="goToNext">
-            스웨덴
-          </PrimaryBtn>
-          <PrimaryBtn width="250px" height="60px" @click="goToNext">
-            스웨덴
-          </PrimaryBtn>
-          <!-- {{ getRandom3 }} -->
-            {{ wrongList[3]?.name.common }}
+          <PrimaryBtn
+    v-for="(item, index) in shuffledChoices"
+    :key="index"
+    width="250px"
+    height="60px"
+    @click="checkAnswer(item)"
+  >
+    {{ item?.name.common }}
+  </PrimaryBtn>
         </div>
       </div>
     </QuizCard>
@@ -47,13 +41,13 @@ import QuizCard from '@/components/QuizCard.vue';
 import QuizProgress from '@/components/QuizProgress.vue';
 import router from '@/router';
 import { useQuizStore } from '@/stores/counter';
-import { computed, onMounted, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
 
 const store = useQuizStore();
 const states = reactive({
-  list: [],
+  list: [], //정답 10개 리스트
   progresses: [
-    { id: 1, isCorrect: true },
+    { id: 1, isCorrect: false },
     { id: 2, isCorrect: false },
     { id: 3, isCorrect: false },
     { id: 4, isCorrect: false },
@@ -65,74 +59,104 @@ const states = reactive({
     { id: 10, isCorrect: false },
   ],
   problemList: [],
+  wrongList: [], //오답 240개 리스트
 });
 const problemNUm = ref(0);
-const listNum = ref(0);
-const arr = ref(Array.from({ length: 250 }, (_, i) => i));
-const wrongChoices = ref([]);
-// const wrongList = ref([])
-const allCountries = ref([]);
+const wrongThreeChoices = ref([]);
+const quizProgressId = ref(0)
+const goBackNum = ref(0)
 
-const getWrong = () => {
-  const result = []
+// 정답이 아닌 버튼을 위한 3개 뽑기
+const getThreeWrong = () => {
+  let result = [];
 
-  while(result.length < 3){
-    let num = Math.floor(Math.random() * 250)
-    if(arr.value.includes(num)){
-      result.push(num)
+  while (result.length < 3) {
+    let num = Math.floor(Math.random() * 240);
+
+    if (!result.includes(num)) {
+      result.push(num);
     }
   }
-  wrongChoices.value = result
-}
 
-const wrongList = computed(() => {
-  return wrongChoices.value.map(index => store.axiosQuiz[index]);
+  wrongThreeChoices.value = result;
+};
+
+watch(goBackNum, (newVal) => {
+  if(newVal > 3){
+    router.push('/result')
+  }
 })
 
+watch(problemNUm,(newVal) => {
+  if(newVal >= 10){
+    router.push('/result')
+  }
+})
 
 //문제 깃발,이름,사진 등등 => 결국 이놈이 정답
 const computeNum = computed(() => {
   return states.list[problemNUm.value];
 });
 
-console.log(computeNum);
-
-//무작위로 10개 뽑고 이걸 리스트에 대입 =>
-// 1. 버튼 정답값 무작위로 설정,
-// 2. 맞던 틀린던 스코어점수값 감지
-// 3. 4개 이하면 바로 결과창으로 이동
-
-const goToNext = () => {
+const checkAnswer = (index) => {
+  //index = {flags: {…}, name: {…}, capital: Array(1)}
+  if(index.name.common == computeNum.value.name.common){
+    states.progresses[quizProgressId.value].isCorrect = true
+    store.quiz++
+    console.log("store.quiz : ",store.quiz);
+  }else{
+    states.progresses[quizProgressId.value].isCorrect = false
+    goBackNum.value++
+  }
+  quizProgressId.value++
   problemNUm.value++;
-  // router.push
+  getThreeWrong()
 };
 
+const shuffleArray = (array) => {
+  return array.sort(() => Math.random() - 0.5);
+};
+
+const shuffledChoices = computed(() => {
+  const arr = [
+    computeNum.value,
+    states.wrongList[wrongThreeChoices.value[0]],
+    states.wrongList[wrongThreeChoices.value[1]],
+    states.wrongList[wrongThreeChoices.value[2]],
+  ];
+
+  return shuffleArray(arr);
+});
+
 onMounted(async () => {
+  store.resetQuizNUm()
   const response = await store.axiosQuiz();
-  const copyResponse = [...response]
-  const num = [];
+  const arr = Array.from({ length: 250 }, (_, i) => i);
+  const correctNum = [];
 
   //랜덤한 수 10개 뽑기 (중복 제거)
+  //정답만 뺸 240개의 리스트 = arr
+  //correctNum = [10,40,2,123,34,12,...]
   for (let index = 0; index < 10; index++) {
     let num1 = Math.floor(Math.random() * 250);
-    while (num.includes(num1)) {
+    while (correctNum.includes(num1)) {
       num1 = Math.floor(Math.random() * 250);
     }
-    num.push(num1);
+    const idx = arr.findIndex((u) => u == num1);
+    arr.splice(idx, 1);
+    correctNum.push(num1);
   }
 
-  for (let i = 0; i < num.length; i++) {
-    states.list.push(response[num[i]]);
+  //랜덤한 수 10개를 => 국가 데이터로 리스트 변환
+  for (let i = 0; i < correctNum.length; i++) {
+    states.list.push(response[correctNum[i]]);
+  }
+  //정답을 뺀 240개를 => 국가 데이터로 리스트 변환
+  for (let index = 0; index < arr.length; index++) {
+    states.wrongList.push(response[arr[index]]);
   }
 
-  //정답만 뺸 240개의 리스트 = arr
-  for (let index = 0; index < num.length; index++) {
-    const i = arr.value.findIndex((u) => u === num[index]);
-    arr.value.splice(i, 1);
-  }
-
-    getWrong()
-
+  getThreeWrong()
 });
 </script>
 

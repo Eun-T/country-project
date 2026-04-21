@@ -5,7 +5,7 @@
         <img src="../assets/images/congrats.png" alt="축하메시지" />
       </div>
       <h2 class="quiz-completed">축하합니다! 퀴즈를 완료했어요.</h2>
-      <h4 class="quiz-correct">총 10문제 중 4문제를 맞혔어요.</h4>
+      <h4 class="quiz-correct">총 10문제 중 {{store.quiz}}문제를 맞혔어요.</h4>
       <PrimaryBtn width="250px" height="60px" @click="goToHome"> 다시 시작하기 </PrimaryBtn>
     </QuizCard>
   </div>
@@ -15,9 +15,11 @@
 import OptionBtn from "@/components/OptionBtn.vue";
 import PrimaryBtn from "@/components/PrimaryBtn.vue";
 import QuizCard from "@/components/QuizCard.vue";
+import { useQuizStore } from "@/stores/counter";
 import { useRouter } from "vue-router";
 
 const router = useRouter()
+const store = useQuizStore()
 
 const goToHome = () => {
   router.push('/')
