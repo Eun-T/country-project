@@ -10,10 +10,10 @@ export const useQuizStore = defineStore('quiz', () => {
     return response.data
   }
 
-  const resetQuizNUm = () => {
+  const resetQuizNum = () => {
     quiz.value = 0
   }
 
 
-  return { quiz, axiosQuiz, resetQuizNUm }
+  return { quiz, axiosQuiz, resetQuizNum }
 })

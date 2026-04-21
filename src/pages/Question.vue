@@ -12,8 +12,8 @@
         <h3 class="question-explain">
           이 국기
           <img
-            :src="computeNum?.flags.png"
-            :alt="computeNum?.flags.alt"
+            :src="currentQuestion?.flags.png"
+            :alt="currentQuestion?.flags.alt"
             width="15px"
             height="15px"
           />
@@ -21,14 +21,14 @@
         </h3>
         <div class="question-btn">
           <PrimaryBtn
-    v-for="(item, index) in shuffledChoices"
-    :key="index"
-    width="250px"
-    height="60px"
-    @click="checkAnswer(item)"
-  >
-    {{ item?.name.common }}
-  </PrimaryBtn>
+            v-for="(item, index) in shuffledChoices"
+            :key="index"
+            width="250px"
+            height="60px"
+            @click="checkAnswer(item)"
+          >
+            {{ item?.name.common }}
+          </PrimaryBtn>
         </div>
       </div>
     </QuizCard>
@@ -42,6 +42,7 @@ import QuizProgress from '@/components/QuizProgress.vue';
 import router from '@/router';
 import { useQuizStore } from '@/stores/counter';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { pickUniqueNumbers } from '@/utils/pickUniqueNumbers ';
 
 const store = useQuizStore();
 const states = reactive({
@@ -58,59 +59,59 @@ const states = reactive({
     { id: 9, isCorrect: false },
     { id: 10, isCorrect: false },
   ],
-  problemList: [],
   wrongList: [], //오답 240개 리스트
 });
-const problemNUm = ref(0);
+const problemNum = ref(0);
 const wrongThreeChoices = ref([]);
-const quizProgressId = ref(0)
-const goBackNum = ref(0)
+const quizProgressId = ref(0);
+const goBackNum = ref(0);
 
 // 정답이 아닌 버튼을 위한 3개 뽑기
 const getThreeWrong = () => {
-  let result = [];
-
-  while (result.length < 3) {
-    let num = Math.floor(Math.random() * 240);
-
-    if (!result.includes(num)) {
-      result.push(num);
-    }
-  }
-
-  wrongThreeChoices.value = result;
+  wrongThreeChoices.value = pickUniqueNumbers(3, 240);
 };
 
 watch(goBackNum, (newVal) => {
-  if(newVal > 3){
-    router.push('/result')
+  if (newVal > 3) {
+    router.push('/result');
   }
-})
-
-watch(problemNUm,(newVal) => {
-  if(newVal >= 10){
-    router.push('/result')
-  }
-})
-
-//문제 깃발,이름,사진 등등 => 결국 이놈이 정답
-const computeNum = computed(() => {
-  return states.list[problemNUm.value];
 });
 
-const checkAnswer = (index) => {
-  //index = {flags: {…}, name: {…}, capital: Array(1)}
-  if(index.name.common == computeNum.value.name.common){
-    states.progresses[quizProgressId.value].isCorrect = true
-    store.quiz++
-    console.log("store.quiz : ",store.quiz);
-  }else{
-    states.progresses[quizProgressId.value].isCorrect = false
-    goBackNum.value++
+watch(problemNum, (newVal) => {
+  if (newVal >= 10) {
+    router.push('/result');
   }
-  quizProgressId.value++
-  problemNUm.value++;
-  getThreeWrong()
+});
+
+//문제 깃발,이름,사진 등등 => 결국 이놈이 정답
+const currentQuestion = computed(() => {
+  return states.list[problemNum.value];
+});
+
+const isCorrectAnswer = (selected) => {
+  return selected.name.common == currentQuestion.value.name.common;
+};
+
+const updateAnswerState = (isCorrect) => {
+  states.progresses[quizProgressId.value].isCorrect = isCorrect;
+
+  if (isCorrect) {
+    store.quiz++;
+  } else {
+    goBackNum.value++;
+  }
+};
+
+const moveNextQuestion = () => {
+  quizProgressId.value++;
+  problemNum.value++;
+  getThreeWrong();
+};
+
+const checkAnswer = (index) => {
+  const isCorrect = isCorrectAnswer(index);
+  updateAnswerState(isCorrect);
+  moveNextQuestion();
 };
 
 const shuffleArray = (array) => {
@@ -119,7 +120,7 @@ const shuffleArray = (array) => {
 
 const shuffledChoices = computed(() => {
   const arr = [
-    computeNum.value,
+    currentQuestion.value,
     states.wrongList[wrongThreeChoices.value[0]],
     states.wrongList[wrongThreeChoices.value[1]],
     states.wrongList[wrongThreeChoices.value[2]],
@@ -129,7 +130,7 @@ const shuffledChoices = computed(() => {
 });
 
 onMounted(async () => {
-  store.resetQuizNUm()
+  store.resetQuizNum();
   const response = await store.axiosQuiz();
   const arr = Array.from({ length: 250 }, (_, i) => i);
   const correctNum = [];
@@ -148,15 +149,12 @@ onMounted(async () => {
   }
 
   //랜덤한 수 10개를 => 국가 데이터로 리스트 변환
-  for (let i = 0; i < correctNum.length; i++) {
-    states.list.push(response[correctNum[i]]);
-  }
-  //정답을 뺀 240개를 => 국가 데이터로 리스트 변환
-  for (let index = 0; index < arr.length; index++) {
-    states.wrongList.push(response[arr[index]]);
-  }
+  states.list = correctNum.map(num => response[num]);
 
-  getThreeWrong()
+  //정답을 뺀 240개를 => 국가 데이터로 리스트 변환
+  states.wrongList = arr.map(num => response[num])
+
+  getThreeWrong();
 });
 </script>
 
@@ -186,3 +184,16 @@ onMounted(async () => {
   gap: 20px;
 }
 </style>
+
+<!-- // const checkAnswer = (index) => {
+//   if (index.name.common == currentQuestion.value.name.common) {
+//     states.progresses[quizProgressId.value].isCorrect = true;
+//     store.quiz++;
+//   } else {
+//     states.progresses[quizProgressId.value].isCorrect = false;
+//     goBackNum.value++;
+//   }
+//   quizProgressId.value++;
+//   problemNum.value++;
+//   getThreeWrong();
+// }; -->

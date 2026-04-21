@@ -42,5 +42,11 @@ npm run dev
 3. 재사용 가능한 버튼 컴포넌트 설계 시 <button> 태그 사용의 중요성 인지
 4. Axios를 활용한 API 통신 및 비동기 데이터 처리 흐름 학습
 5. 컴포넌트의 역할 분리를 통한 유지보수성과 재사용성을 고려한 설계 경험
+6. for문을 map으로 바꿔라 ( 더 쉽다 ㄹㅇ임... )
+ for (let i = 0; i < correctNum.length; i++) {
+    states.list.push(response[correctNum[i]]);
+  }
+
+ =>  states.list = correctNum.map(num => response[num]);
 
 (개선할 점)
